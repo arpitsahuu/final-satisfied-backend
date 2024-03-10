@@ -22,7 +22,7 @@ app.use(cookieparser());
 
 
 app.use(cors({
-	origin: "http://localhost:3000",
+	origin: "https://frontend-job.vercel.app/",
 	credentials: true,
 	optionsSuccessStatus: 200 // Address potential preflight request issues
 }));
