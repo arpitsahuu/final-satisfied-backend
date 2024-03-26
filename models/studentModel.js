@@ -75,6 +75,7 @@ const studentModel = mongoose.Schema(
 		applications: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobApplication' }	
 		],
 		jobapplications: [{ type: mongoose.Schema.Types.ObjectId, ref: 'job' }],
+		course:String,
 	},
 	{ timestamps: true }
 );
