@@ -27,11 +27,12 @@ const {
 	AdminResgisterState,
 	AdminAllInfo,
 	DeleteEmployer,
-	addCompanyDeatils
+	addCompanyDeatils,
+	avtivateEmployer
 } = require('../controllers/employerControllers');
 const { isAuthenticated } = require('../middlewares/auth');
 const { isAdmin } = require('../middlewares/adminAuth');
-const { SerchJobs } = require('../controllers/indexControllers');
+const { SerchJobs, activateEmployer } = require('../controllers/indexControllers');
 
 const router = express.Router();
 
@@ -49,6 +50,9 @@ router.post('/addCompanyDeatils', isAuthenticated , addCompanyDeatils);
 
 // POST /employer/signup
 router.post('/signup', employersignup);
+
+router.post('/validation', avtivateEmployer);
+
 
 // GET /employer/signout
 router.get('/signout', isAuthenticated, employersignout);

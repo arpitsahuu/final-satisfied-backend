@@ -10,6 +10,9 @@ const Job = require("../models/jobModel");
 const JobApplication = require("../models/jobApplicationModel");
 const Studnt = require("../models/studentModel");
 const Student = require("../models/studentModel");
+const activationToken = require("../utils/activationToken");
+const sendmailActication = require("../utils/sendmail");
+const jwt = require('jsonwebtoken');
 
 const cloudinary = require("cloudinary").v2;
 
@@ -29,12 +32,98 @@ exports.currentemployer = catchAsyncError(async (req, res, next) => {
 });
 
 exports.employersignup = catchAsyncError(async (req, res, next) => {
-  const {email} = req.body;
-  const isExist = await Employer.findOne({email:email});
-  if(isExist) return next(new ErrorHandler("Employer with this email already exists", 401));
-  const employer = await new Employer(req.body).save();
-  sendtoken(employer, 200, res);
+  const {firstname, lastname,email,contact,city,password,organisationname} = req.body;
+
+  const employerCurrent = {
+		firstname,
+    lastname,
+		email,
+		contact,
+		city,
+		password,
+    organisationname
+	}
+
+	const ActivationCode = Math.floor(1000 + Math.random() * 9000);
+	console.log(ActivationCode)
+
+	const data = { name: firstname, activationCode: ActivationCode };
+	console.log(data)
+
+	try {
+		await sendmailActication(
+		  res,
+		  next,
+		  email,
+		  "Verification code",
+		  "activationMail.ejs",
+		  data
+		);
+		let token = await activationToken(employerCurrent, ActivationCode);
+		console.log(token)
+		let options = {
+		  httpOnly: true,
+		  secure: true,
+		};
+		res.status(200).cookie("token", token, options).json({
+		  succcess: true,
+		  message: "successfully send mail pleas check your Mail",
+		  Token: token,
+		});
+	} catch (error) {
+		return next(new ErrorHandler(error.message, 400));
+	}
+  // const isExist = await Employer.findOne({email:email});
+  // if(isExist) return next(new ErrorHandler("Employer with this email already exists", 401));
+  // const employer = await new Employer(req.body).save();
+  // sendtoken(employer, 200, res);
   // res.status(201).json({ employer });
+});
+
+exports.avtivateEmployer = catchAsyncError(async (req, res, next) => {
+	let { activationCode } = req.body;
+  console.log(activationCode)
+
+	if (!activationCode) return next(new ErrorHandler("Provide Activation Code"));
+
+	// const token = req.cookies || req.headers.authorization;
+	const token = req.headers.authorization;
+  console.log(token)
+	const {user,ActivationCode} = await jwt.verify(token,process.env.JWT_TOKEN_SECRET);
+
+	console.log(user)
+
+	if (!user) return next(new ErrorHandler("Invelide Token"));
+	const isEmailExit = await Employer.findOne({ email: user.email });
+	console.log(isEmailExit)
+
+  if (isEmailExit)
+    return next(new ErrorHandler("User With This Email Address Already Exits",401));
+
+	if (activationCode != ActivationCode)
+    return next(new ErrorHandler("Wrong Activation Code"));
+
+  let { firstname,
+    lastname,
+		email,
+		contact,
+		city,
+		password,
+    organisationname } =
+    user;
+    console.log(user)
+	const newEmployer = await Employer.create({
+		firstname,
+    lastname,
+		email,
+		contact,
+		city,
+		password,
+    organisationname
+	})
+  console.log(newEmployer)
+	sendtoken(newEmployer, 200, res, req);
+
 });
 
 exports.employersingin = catchAsyncError(async (req, res, next) => {
@@ -154,6 +243,7 @@ exports.employerUpdate = catchAsyncError(async (req, res, next) => {
 
 exports.employerOrganisationLogo = catchAsyncError(async (req, res, next) => {
   const employer = await Employer.findById(req.id).exec();
+
 
   const file = req.files.organisationlogo;
   if (req.files && req.files.organisationlogo) {

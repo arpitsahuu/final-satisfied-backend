@@ -5,7 +5,7 @@ exports.sendmail = (req, res, next, url) => {
 	const transport = nodemailer.createTransport({
 		service: 'gmail',
 		host: 'smtp.gmail.com',
-		port: 465,
+		port: 587,
 		auth: {
 			user: process.env.MAIL_EMAIL_ADDRESS,
 			pass: process.env.MAIL_EMAIL_PASSWORD,
@@ -13,7 +13,7 @@ exports.sendmail = (req, res, next, url) => {
 	});
 
 	const mailOptions = {
-		from: 'Job portal  Company',
+		from: 'Satisfied Job',
 		to: req.body.email,
 		subject: 'Password Reset Link',
 		// "text":"Do not share this link",
@@ -24,6 +24,7 @@ exports.sendmail = (req, res, next, url) => {
 		if (err) {
 			return next(new ErrorHandler(err, 500));
 		}
+		console.log("jo")
 		return res.status(200).json({
 			message: 'Mail sent  Successfull!',
 			url,

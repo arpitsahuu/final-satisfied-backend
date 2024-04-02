@@ -19,7 +19,9 @@ const {
 	applyForJob,
 	SerchJobs,
 	findTopCompony,
-	findrecentCompony
+	findrecentCompony,
+	findTopComponyJobs,
+	activateStudnet
 } = require('../controllers/indexControllers');
 const { isAuthenticated } = require('../middlewares/auth');
 const router = express.Router();
@@ -33,6 +35,9 @@ router.post('/student', isAuthenticated, currentstudent);
 
 // POST /student/signup
 router.post('/student/signup', studentsignup);
+
+// POST /student/signup
+router.post('/student/validation', activateStudnet);
 
 // POST /student/signin
 router.post('/student/signin', studentsignin);
@@ -71,6 +76,9 @@ router.post('/search', SerchJobs);
 
 // serch Job
 router.post('/topcompony', findTopCompony);
+
+// serch Job
+router.post('/topcomponyjobs', findTopComponyJobs);
 
 // serch Job
 router.post('/resentjobs', findrecentCompony);

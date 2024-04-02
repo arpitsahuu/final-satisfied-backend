@@ -7,11 +7,14 @@ const { sendtoken } = require('../utils/SendToken');
 const { sendmail } = require('../utils/nodemailer');
 const path = require('path');
 const JobApplication = require('../models/jobApplicationModel');
-const Employer = require('../models/employerModel'); 4
+const Employer = require('../models/employerModel'); 
+const jwt = require('jsonwebtoken');
 
 const cloudinary = require("cloudinary").v2;
 
 const { json } = require('express');
+const activationToken = require('../utils/activationToken');
+const sendmailActication = require('../utils/sendmail');
 
 cloudinary.config({
 	cloud_name: 'dcj2gzytt',
@@ -29,9 +32,84 @@ exports.currentstudent = catchAsyncError(async (req, res, next) => {
 });
 
 exports.studentsignup = catchAsyncError(async (req, res, next) => {
-	const student = await new Student(req.body).save();
-	sendtoken(student, 200, res);
-	res.status(201).json({ student });
+	const { email , password , contact , city, name} = req.body;
+
+	const studentcurrent = {
+		name,
+		email,
+		contact,
+		city,
+		password
+	}
+
+	const ActivationCode = Math.floor(1000 + Math.random() * 9000);
+	console.log(ActivationCode)
+
+	const data = { name: name, activationCode: ActivationCode };
+	console.log(data)
+
+	try {
+		await sendmailActication(
+		  res,
+		  next,
+		  email,
+		  "Verification code",
+		  "activationMail.ejs",
+		  data
+		);
+		let token = await activationToken(studentcurrent, ActivationCode);
+		console.log(token)
+		let options = {
+		  httpOnly: true,
+		  secure: true,
+		};
+		res.status(200).cookie("token", token, options).json({
+		  succcess: true,
+		  message: "successfully send mail pleas check your Mail",
+		  Token: token,
+		});
+	} catch (error) {
+		return next(new ErrorHandler(error.message, 400));
+	}
+
+	// const student = await new Student(req.body).save();
+
+	
+	// res.status(201).json({ studentcurrent });
+});
+
+exports.activateStudnet = catchAsyncError(async (req, res, next) => {
+	let { activationCode } = req.body;
+
+	if (!activationCode) return next(new ErrorHandler("Provide Activation Code"));
+
+	// const token = req.cookies || req.headers.authorization;
+	const token = req.headers.authorization;
+	const {user,ActivationCode} = await jwt.verify(token,process.env.JWT_TOKEN_SECRET);
+
+	console.log(user)
+
+	if (!user) return next(new ErrorHandler("Invelide Token"));
+	const isEmailExit = await Student.findOne({ email: user.email });
+	console.log(isEmailExit)
+
+  if (isEmailExit)
+    return next(new ErrorHandler("User With This Email Address Already Exits",401));
+
+	if (activationCode != ActivationCode)
+    return res.status(401).json({massage:"Wrong Activation Code"});
+
+  let { name, email, password, contact, city } =
+    user;
+	const newStudent = await Student.create({
+		name,
+		email,
+		contact,
+		city,
+		password
+	})
+	sendtoken(newStudent, 200, res, req);
+
 });
 
 exports.studentsignin = catchAsyncError(async (req, res, next) => {
@@ -177,6 +255,8 @@ exports.studentResuma = catchAsyncError(async (req, res, next) => {
 
 exports.studentsendmail = catchAsyncError(async (req, res, next) => {
 	const student = await Student.findOne({ email: req.body.email }).exec();
+	console.log("enter")
+	console.log(student)
 
 	if (!student) {
 		return next(
@@ -186,12 +266,13 @@ exports.studentsendmail = catchAsyncError(async (req, res, next) => {
 
 	const url = `${process.env.FROENTEND_URI}/studentForgetLink/${student._id
 		}`;
+		console.log(url)
 
 	sendmail(req, res, next, url);
 	student.resetpasswordToken = '1';
 	await student.save();
 
-	res.json({ student, url });
+	// res.json({ student, url });
 });
 
 
@@ -573,6 +654,13 @@ exports.deleteStudent = catchAsyncError(async (req, res, next) => {
 exports.findTopCompony = catchAsyncError(async (req, res, next) => {
 	const jobs = await Job.find().populate('employer').sort({ 'applications.length': -1 }).limit(10);
 	res.json({jobs})
+});
+
+
+/* -------- find top componyes ------ */
+exports.findTopComponyJobs = catchAsyncError(async (req, res, next) => {
+	const company = await Employer.find().sort({ 'jobs.length': -1 }).limit(10);
+	res.json({company})
 });
 
 

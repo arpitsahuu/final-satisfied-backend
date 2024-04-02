@@ -36,7 +36,7 @@ app.use(cors({
 }));
 
 
-// app.use(cors({
+// app.use(cors({x
 // 	origin: "https://final-satisfiend-job.onrender.com/",
 // 	credentials: true,
 // 	methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
