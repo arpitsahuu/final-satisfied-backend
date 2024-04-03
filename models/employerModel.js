@@ -49,7 +49,7 @@ const employerModel = mongoose.Schema(
 			type: Object,
 			default: {
 				fileId: '',
-				url: 'https://www.shutterstock.com/image-vector/company-icon-vector-isolated-on-600nw-1160051578.jpg',
+				url: 'https://www.pikpng.com/pngl/b/66-660381_business-icon-company-name-icon-clipart.png',
 			},
 		},
 		organisationname: {

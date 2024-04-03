@@ -58,7 +58,6 @@ exports.studentsignup = catchAsyncError(async (req, res, next) => {
 		  data
 		);
 		let token = await activationToken(studentcurrent, ActivationCode);
-		console.log(token)
 		let options = {
 		  httpOnly: true,
 		  secure: true,
